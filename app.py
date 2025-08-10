@@ -95,4 +95,9 @@ def admin_dashboard():
     return render_template('admin.html', guests=guests, photos=photos)
 
 if __name__ == '__main__':
+
+    # Bind to all interfaces so the server is reachable from other machines
+    app.run(debug=True, host='0.0.0.0')
+
     app.run(debug=True)
+

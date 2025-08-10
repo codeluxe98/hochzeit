@@ -17,10 +17,14 @@ Eine einfache Flask-Anwendung für eine Hochzeitswebseite. Sie ermöglicht RSVP-
    ```bash
    python create_admin.py
    ```
-
+4. Anwendung starten (für Zugriff von anderen Geräten `--host 0.0.0.0` verwenden):
+   ```bash
+   flask --app app run --host 0.0.0.0
+=======
 4. Anwendung starten:
    ```bash
    flask --app app run
+
    ```
 
 ## Tests
