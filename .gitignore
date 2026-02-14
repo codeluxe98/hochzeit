@@ -1,0 +1,15 @@
+.env
+.env.*
+!.env.example
+
+/vendor/
+/node_modules/
+
+/uploads/
+/qrcodes/
+
+/.idea/
+/.vscode/
+
+*.log
+.DS_Store

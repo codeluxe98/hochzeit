@@ -72,6 +72,21 @@ php -S 0.0.0.0:8080
 ```
 Dann im Browser öffnen: `http://localhost:8080/index.php`
 
+## Docker / Coolify
+1. Environment vorbereiten:
+```bash
+cp .env.example .env
+```
+
+2. Starten:
+```bash
+docker compose up --build -d
+```
+
+Hinweise:
+- Die `.env` wird **nicht** ins Docker-Image kopiert (siehe `.dockerignore`). Nutze `docker-compose.yml` + Environment-Variablen.
+- Für Coolify: als Build Pack `dockercompose` verwenden und `docker-compose.yml` deployen. Die benötigten Variablen (`APP_URL`, `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS`, optional `SYNO_*`) in Coolify als Envs setzen.
+
 ## Hinweise
 - Alle DB‑Zugriffe laufen über prepared statements.
 - Admin‑Login nutzt `password_verify()`.
