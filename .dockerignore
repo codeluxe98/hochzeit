@@ -1,0 +1,7 @@
+.git
+.idea
+.env
+uploads
+qrcodes
+node_modules
+
