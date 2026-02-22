@@ -1,6 +1,20 @@
-__pycache__/
-*.pyc
-uploads/
-hochzeit.db
-instance/
-.pytest_cache/
+.env
+.env.*
+!.env.example
+
+/vendor/
+/node_modules/
+
+/uploads/*
+!/uploads/.htaccess
+/qrcodes/*
+!/qrcodes/.htaccess
+
+/.idea/
+/.vscode/
+
+*.log
+.DS_Store
+
+# Local-only server access notes (may contain passwords)
+ACCESS.md

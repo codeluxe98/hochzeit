@@ -1,0 +1,11 @@
+Options -Indexes
+
+# Block dotfiles and internal folders.
+RewriteEngine On
+RewriteRule (^|/)\. - [F]
+
+# Block common sensitive files even if dotfile rules are bypassed.
+<FilesMatch "(?i)^(composer\\.json|composer\\.lock|schema\\.sql|Dockerfile|docker-compose\\.yml)$">
+    Require all denied
+</FilesMatch>
+

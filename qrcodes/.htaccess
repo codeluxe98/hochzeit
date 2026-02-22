@@ -1,0 +1,7 @@
+Options -Indexes
+
+# QR codes are static assets; block script execution for defense-in-depth.
+<FilesMatch "(?i)\\.(php|phtml|phar|cgi|pl|asp|aspx)$">
+    Require all denied
+</FilesMatch>
+

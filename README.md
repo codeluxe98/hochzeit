@@ -1,34 +1,109 @@
-# Hochzeit
+# Hochzeit Webapp (PHP + MySQL)
 
-Eine einfache Flask-Anwendung für eine Hochzeitswebseite. Sie ermöglicht RSVP-Antworten, Fotouploads über einen QR-Code und eine Admin-Oberfläche.
+Elegante Hochzeits‑Website mit:
+- One‑Pager (Story, Ablauf, Anreise, Unterkunft, Registry, RSVP)
+- QR‑geschützter Galerie inkl. Master‑Key (`gallery.php`)
+- Foto‑Upload mit Multi‑Upload per Drag & Drop inkl. Fortschrittsbalken pro Bild (`upload.php`)
+- Lokaler Speicherung + optionalem Synology File‑Station Upload (pro Gast eigener Ordner auf Basis Vorname/Nachname)
+- Gast-spezifischen Synology-Ordnern (pro Gast eigener Upload-Pfad)
+- Admin‑Panel für Gäste, QR‑Codes, QR‑Mailversand via SMTP, Foto‑Moderation, Theme‑/Inhalts‑Settings, System/Synology‑Settings, SQL‑Editor und Logs/Statistik (`admin.php`)
+- Vollständigem Activity Logging (`activity_logs`)
 
-## Setup
+## Dateien
+- `index.php`
+- `config.php`
+- `gallery.php`
+- `upload.php`
+- `admin.php`
+- `css/style.css`
+- `js/scripts.js`
+- `schema.sql`
 
-1. Abhängigkeiten installieren:
-   ```bash
-   pip install -r requirements.txt
-   ```
-2. Datenbank konfigurieren. Standardmäßig wird eine lokale SQLite-Datei verwendet. Um MySQL zu nutzen, setze die Umgebungsvariable `DATABASE_URL`, z. B.:
-   ```bash
-   export DATABASE_URL=mysql://user:pass@localhost/hochzeit
-   ```
-
-3. Admin-Benutzer anlegen:
-   ```bash
-   python create_admin.py
-   ```
-4. Anwendung starten (für Zugriff von anderen Geräten `--host 0.0.0.0` verwenden):
-   ```bash
-   flask --app app run --host 0.0.0.0
-=======
-4. Anwendung starten:
-   ```bash
-   flask --app app run
-
-   ```
-
-## Tests
-
+## Installation
+1. Abhängigkeiten installieren (QR‑Bibliothek):
 ```bash
-pytest
+composer require chillerlan/php-qrcode
 ```
+Optional (Legacy‑Variante, ebenfalls unterstützt):
+```bash
+composer require phpqrcode/phpqrcode
+```
+
+2. Datenbank anlegen und Schema importieren:
+```bash
+mysql -u root -p < schema.sql
+```
+
+3. Initialen Admin konfigurieren (wird automatisch erstellt, wenn `users` leer ist):
+- `ADMIN_INITIAL_USERNAME`
+- `ADMIN_INITIAL_PASSWORD`
+- Beim ersten Login muss dieser Admin zwingend E‑Mail und Passwort ändern.
+ - Hinweis: Ohne gesetztes `ADMIN_INITIAL_PASSWORD` wird **kein** Default-Admin erzeugt (sicherer Default).
+
+4. `.env` bearbeiten (Datei liegt im Projektroot und wird automatisch von `config.php` geladen):
+```dotenv
+APP_URL=http://localhost:8080
+
+DB_HOST=127.0.0.1
+DB_NAME=wedding_app
+DB_USER=root
+DB_PASS=
+
+ADMIN_INITIAL_USERNAME=admin
+ADMIN_INITIAL_PASSWORD=
+
+# Optional: SQL-Editor im Admin aktivieren (default: aus)
+ADMIN_SQL_CONSOLE_ENABLED=0
+
+# Session cookies
+SESSION_COOKIE_SECURE=1
+SESSION_COOKIE_SAMESITE=Lax
+
+# Optional: Synology Upload (Fallback; kann auch im Admin unter \"System\" in MySQL gespeichert werden)
+SYNO_BASE_URL=https://deine-nas:5001
+SYNO_USERNAME=dein-benutzer
+SYNO_PASSWORD=dein-passwort
+SYNO_TARGET_PATH=/wedding-uploads
+SYNO_VERIFY_SSL=1
+
+# Optionaler Fallback für Master-Key (wenn nicht in settings vorhanden)
+GALLERY_MASTER_KEY=
+```
+
+5. Schreibrechte sicherstellen:
+- `uploads/`
+- `qrcodes/`
+
+6. Lokal starten (Beispiel):
+```bash
+php -S 127.0.0.1:8080 router.php
+```
+Dann im Browser öffnen: `http://localhost:8080/index.php`
+
+## Docker / Coolify
+1. Environment vorbereiten:
+```bash
+cp .env.example .env
+```
+
+2. Starten:
+```bash
+docker compose up --build -d
+```
+
+Hinweise:
+- Die `.env` wird **nicht** ins Docker-Image kopiert (siehe `.dockerignore`). Nutze `docker-compose.yml` + Environment-Variablen.
+- Für Coolify: als Build Pack `dockercompose` verwenden und `docker-compose.yml` deployen. Die benötigten Variablen (`APP_URL`, `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS`, optional `SYNO_*`) in Coolify als Envs setzen.
+
+## Hinweise
+- Alle DB‑Zugriffe laufen über prepared statements.
+- Admin‑Login nutzt `password_verify()`.
+- First‑Login‑Pflicht: Ohne gesetzte E‑Mail oder bei `must_change_password=1` wird zuerst ein Setup‑Formular erzwungen.
+- Synology-Konfiguration kann im Admin-Panel gespeichert werden (`settings`-Tabelle) und überschreibt `.env`.
+- E-Mail-Vorlagen + SMTP-Zugangsdaten (Host/Port/Encryption/User/Passwort) werden im Admin gespeichert (`settings`) und beim QR-Erstellen automatisch verwendet.
+- Galerie-Master-Key wird automatisch mit 32 Zeichen (inkl. Buchstaben, Zahlen, Sonderzeichen) erzeugt und in MySQL gespeichert.
+- SQL-Editor im Admin ist standardmäßig deaktiviert (setzt `ADMIN_SQL_CONSOLE_ENABLED=1`, falls wirklich benötigt).
+- Logs & Statistik sind im Admin-Tab `Logs & Statistik` sichtbar.
+- Token‑Zugriff zur Galerie wird serverseitig geprüft (aktiv + nicht abgelaufen). Master-Key ermöglicht Gesamtzugriff.
+- Galerie zeigt Uploads ohne Freigabe; Status im Admin steuert nur die Sichtbarkeit auf der öffentlichen Startseite.
+- QR-Erzeugung nutzt bei fehlendem `ext-gd` automatisch SVG-Fallback (wenn `chillerlan/php-qrcode` installiert ist).
