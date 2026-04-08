@@ -1,109 +1,39 @@
-# Hochzeit Webapp (PHP + MySQL)
+# HomeOps Control Center (MVP Foundation)
 
-Elegante Hochzeits‑Website mit:
-- One‑Pager (Story, Ablauf, Anreise, Unterkunft, Registry, RSVP)
-- QR‑geschützter Galerie inkl. Master‑Key (`gallery.php`)
-- Foto‑Upload mit Multi‑Upload per Drag & Drop inkl. Fortschrittsbalken pro Bild (`upload.php`)
-- Lokaler Speicherung + optionalem Synology File‑Station Upload (pro Gast eigener Ordner auf Basis Vorname/Nachname)
-- Gast-spezifischen Synology-Ordnern (pro Gast eigener Upload-Pfad)
-- Admin‑Panel für Gäste, QR‑Codes, QR‑Mailversand via SMTP, Foto‑Moderation, Theme‑/Inhalts‑Settings, System/Synology‑Settings, SQL‑Editor und Logs/Statistik (`admin.php`)
-- Vollständigem Activity Logging (`activity_logs`)
+Produktionsnahes Grundsystem für zentrale Verwaltung von Heimnetzwerk, Raspberry Pis und Hetzner-Servern.
 
-## Dateien
-- `index.php`
-- `config.php`
-- `gallery.php`
-- `upload.php`
-- `admin.php`
-- `css/style.css`
-- `js/scripts.js`
-- `schema.sql`
+## Stack
+- Frontend: Next.js (App Router, TypeScript)
+- Backend: FastAPI + SQLModel + Alembic
+- DB: MariaDB
+- Container: Docker Compose
 
-## Installation
-1. Abhängigkeiten installieren (QR‑Bibliothek):
-```bash
-composer require chillerlan/php-qrcode
-```
-Optional (Legacy‑Variante, ebenfalls unterstützt):
-```bash
-composer require phpqrcode/phpqrcode
-```
+## Struktur
+- `frontend/` UI, Routing, API-Client, Seiten für Dashboard/Server/Users/Audit/Integrationen
+- `backend/` API, Auth, RBAC, Datenmodelle, Seeddaten, Adapter-Schnittstellen
+- `infra/` Compose und Umgebungsvariablen
+- `docs/` Architekturhinweise
 
-2. Datenbank anlegen und Schema importieren:
-```bash
-mysql -u root -p < schema.sql
-```
+## Schnellstart lokal
+1. `cp infra/.env.example infra/.env`
+2. `cp backend/.env.example backend/.env`
+3. `cp frontend/.env.example frontend/.env.local`
+4. `cd infra && docker compose up --build`
+5. Frontend: `http://localhost:3000`, Backend: `http://localhost:8000/docs`
 
-3. Initialen Admin konfigurieren (wird automatisch erstellt, wenn `users` leer ist):
-- `ADMIN_INITIAL_USERNAME`
-- `ADMIN_INITIAL_PASSWORD`
-- Beim ersten Login muss dieser Admin zwingend E‑Mail und Passwort ändern.
- - Hinweis: Ohne gesetztes `ADMIN_INITIAL_PASSWORD` wird **kein** Default-Admin erzeugt (sicherer Default).
+## Seed Login
+- Benutzer: `superadmin`
+- Passwort: `ChangeMe!1234`
 
-4. `.env` bearbeiten (Datei liegt im Projektroot und wird automatisch von `config.php` geladen):
-```dotenv
-APP_URL=http://localhost:8080
-
-DB_HOST=127.0.0.1
-DB_NAME=wedding_app
-DB_USER=root
-DB_PASS=
-
-ADMIN_INITIAL_USERNAME=admin
-ADMIN_INITIAL_PASSWORD=
-
-# Optional: SQL-Editor im Admin aktivieren (default: aus)
-ADMIN_SQL_CONSOLE_ENABLED=0
-
-# Session cookies
-SESSION_COOKIE_SECURE=1
-SESSION_COOKIE_SAMESITE=Lax
-
-# Optional: Synology Upload (Fallback; kann auch im Admin unter \"System\" in MySQL gespeichert werden)
-SYNO_BASE_URL=https://deine-nas:5001
-SYNO_USERNAME=dein-benutzer
-SYNO_PASSWORD=dein-passwort
-SYNO_TARGET_PATH=/wedding-uploads
-SYNO_VERIFY_SSL=1
-
-# Optionaler Fallback für Master-Key (wenn nicht in settings vorhanden)
-GALLERY_MASTER_KEY=
-```
-
-5. Schreibrechte sicherstellen:
-- `uploads/`
-- `qrcodes/`
-
-6. Lokal starten (Beispiel):
-```bash
-php -S 127.0.0.1:8080 router.php
-```
-Dann im Browser öffnen: `http://localhost:8080/index.php`
-
-## Docker / Coolify
-1. Environment vorbereiten:
-```bash
-cp .env.example .env
-```
-
-2. Starten:
-```bash
-docker compose up --build -d
-```
-
-Hinweise:
-- Die `.env` wird **nicht** ins Docker-Image kopiert (siehe `.dockerignore`). Nutze `docker-compose.yml` + Environment-Variablen.
-- Für Coolify: als Build Pack `dockercompose` verwenden und `docker-compose.yml` deployen. Die benötigten Variablen (`APP_URL`, `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS`, optional `SYNO_*`) in Coolify als Envs setzen.
+## MVP enthalten
+- Login + JWT
+- Dashboard Übersicht
+- Server CRUD + Detail + Metrikdaten (Seed)
+- Aktionen mit Audit-Log-Eintrag
+- Benutzerliste + Rollenänderung API
+- Integrations-Adapter-Basis (Solar, DDNS, WireGuard, Portainer, Prometheus)
+- DB-Schema + initiale Alembic-Migration
 
 ## Hinweise
-- Alle DB‑Zugriffe laufen über prepared statements.
-- Admin‑Login nutzt `password_verify()`.
-- First‑Login‑Pflicht: Ohne gesetzte E‑Mail oder bei `must_change_password=1` wird zuerst ein Setup‑Formular erzwungen.
-- Synology-Konfiguration kann im Admin-Panel gespeichert werden (`settings`-Tabelle) und überschreibt `.env`.
-- E-Mail-Vorlagen + SMTP-Zugangsdaten (Host/Port/Encryption/User/Passwort) werden im Admin gespeichert (`settings`) und beim QR-Erstellen automatisch verwendet.
-- Galerie-Master-Key wird automatisch mit 32 Zeichen (inkl. Buchstaben, Zahlen, Sonderzeichen) erzeugt und in MySQL gespeichert.
-- SQL-Editor im Admin ist standardmäßig deaktiviert (setzt `ADMIN_SQL_CONSOLE_ENABLED=1`, falls wirklich benötigt).
-- Logs & Statistik sind im Admin-Tab `Logs & Statistik` sichtbar.
-- Token‑Zugriff zur Galerie wird serverseitig geprüft (aktiv + nicht abgelaufen). Master-Key ermöglicht Gesamtzugriff.
-- Galerie zeigt Uploads ohne Freigabe; Status im Admin steuert nur die Sichtbarkeit auf der öffentlichen Startseite.
-- QR-Erzeugung nutzt bei fehlendem `ext-gd` automatisch SVG-Fallback (wenn `chillerlan/php-qrcode` installiert ist).
+- WebAuthn/Passkeys + 2FA sind als Datenmodell und Erweiterungspfade vorbereitet; vollständiger Challenge/Verify-Flow folgt im nächsten Ausbau.
+- Für Produktion müssen Secrets, TLS, Reverse Proxy, Rate-Limit (z. B. Redis) und harte Sicherheits-Policies ergänzt werden.
