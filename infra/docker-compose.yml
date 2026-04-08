@@ -1,0 +1,43 @@
+version: '3.9'
+services:
+  db:
+    image: mariadb:11.7
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${DB_NAME:-homeops}
+      MARIADB_USER: ${DB_USER:-homeops}
+      MARIADB_PASSWORD: ${DB_PASSWORD:-homeops}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpass}
+    ports:
+      - '3306:3306'
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+  backend:
+    build:
+      context: ../backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      - db
+    ports:
+      - '8000:8000'
+    volumes:
+      - ../backend:/app
+
+  frontend:
+    build:
+      context: ../frontend
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      - backend
+    ports:
+      - '3000:3000'
+    volumes:
+      - ../frontend:/app
+
+volumes:
+  mariadb_data:
